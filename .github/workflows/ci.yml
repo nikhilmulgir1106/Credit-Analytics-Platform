@@ -9,9 +9,9 @@ jobs:
   lint-build-test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
           cache: pip
@@ -22,7 +22,12 @@ jobs:
 
       - name: Lint SQL (sqlfluff)
         working-directory: dbt
-        run: sqlfluff lint models tests
+        # sqlfluff's dbt templater compiles the project, which opens the DuckDB
+        # warehouse file — so its parent dir must exist (it's gitignored, absent
+        # on a fresh checkout). An empty db is fine; compile reads no data.
+        run: |
+          mkdir -p ../warehouse
+          sqlfluff lint models tests
 
       - name: Run pipeline (ingest -> dbt build + tests -> quality gate)
         # --skip-ml keeps CI focused on data correctness; the blocking quality
