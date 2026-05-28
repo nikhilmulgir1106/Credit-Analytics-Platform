@@ -1,0 +1,82 @@
+version: 2
+
+models:
+  - name: dim_borrower
+    description: "Conformed borrower dimension. Grain: one row per client."
+    columns:
+      - name: client_id
+        description: Borrower natural key.
+        data_tests: [not_null, unique]
+      - name: sex
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['male', 'female', 'unknown']
+      - name: age_band
+        data_tests: [not_null]
+      - name: credit_limit_band
+        data_tests: [not_null]
+      - name: region
+        description: Synthetic geographic region (row-access attribute).
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['north', 'south', 'east', 'west']
+
+  - name: fct_payment_history
+    description: >
+      Payment-history fact unpivoted from the wide UCI monthly columns.
+      Grain: one row per client per statement month (month_index 1..6).
+    columns:
+      - name: payment_history_id
+        description: Surrogate key (md5 of client_id + month_index).
+        data_tests: [not_null, unique]
+      - name: client_id
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_borrower')
+                field: client_id
+      - name: month_index
+        description: 1 = most recent statement month .. 6 = oldest.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [1, 2, 3, 4, 5, 6]
+
+  - name: mart_portfolio_risk
+    description: >
+      Default rate and credit exposure by segment (long format).
+      Grain: one row per (segment_dimension, segment_value).
+    columns:
+      - name: segment_dimension
+        data_tests: [not_null]
+      - name: segment_value
+        data_tests: [not_null]
+      - name: default_rate
+        description: Mean default flag within the segment (0..1).
+        data_tests: [not_null]
+
+  - name: feature_default_prediction
+    description: >
+      Single wide feature table feeding the default-prediction model.
+      Grain: one row per client. is_default is the training label.
+    columns:
+      - name: client_id
+        data_tests:
+          - not_null
+          - unique
+          - relationships:
+              arguments:
+                to: ref('dim_borrower')
+                field: client_id
+      - name: is_default
+        description: Training label — 1 if the client defaulted next month.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [0, 1]

@@ -1,0 +1,30 @@
+name: 'creditpulse'
+version: '0.1.0'
+config-version: 2
+
+profile: 'creditpulse'
+
+model-paths: ["models"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+seed-paths: ["seeds"]
+
+target-path: "target"
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+# Medallion layering: staging (silver) -> intermediate -> marts (gold).
+# Schemas keep the bronze/silver/gold separation explicit in DuckDB.
+models:
+  creditpulse:
+    staging:
+      +schema: staging
+      +materialized: view
+    marts:
+      +schema: marts
+      +materialized: table
+    governance:
+      +schema: governance
+      +materialized: view

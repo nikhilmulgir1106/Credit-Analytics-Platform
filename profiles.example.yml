@@ -1,0 +1,18 @@
+# Example dbt profile for CreditPulse (local DuckDB mode).
+# A working copy already lives at dbt/profiles.yml and is picked up
+# automatically when you run dbt from the ./dbt directory.
+#
+# To use the global location instead:
+#   cp profiles.example.yml ~/.dbt/profiles.yml
+#
+# The "production target" (Snowflake) is documented in ARCHITECTURE.md and is
+# intentionally NOT configured here — this project runs fully local on DuckDB.
+
+creditpulse:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: "../warehouse/creditpulse.duckdb"
+      threads: 4
+      external_root: "../data"

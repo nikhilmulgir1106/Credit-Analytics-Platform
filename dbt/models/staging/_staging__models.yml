@@ -1,0 +1,69 @@
+version: 2
+
+models:
+  - name: stg_uci__credit_default
+    description: >
+      Cleaned, typed, deduplicated UCI credit-default clients.
+      Grain: one row per client (client_id). Demographic columns are tagged PII
+      to drive masking in the governance layer.
+    columns:
+      - name: client_id
+        description: Client natural key.
+        data_tests: [not_null, unique]
+      - name: is_default
+        description: 1 if the client defaulted on the next month's payment, else 0.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+      - name: sex_code
+        description: 1 = male, 2 = female.
+        meta: {classification: PII}
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [1, 2]
+      - name: age
+        description: Client age in years.
+        meta: {classification: PII}
+        data_tests: [not_null]
+      - name: education_code
+        description: 1=grad school, 2=university, 3=high school, 4+=other/unknown.
+        meta: {classification: PII}
+      - name: marriage_code
+        description: 1=married, 2=single, 3=other.
+        meta: {classification: PII}
+      - name: credit_limit
+        description: Credit limit (NT dollars).
+        meta: {classification: CONFIDENTIAL}
+        data_tests: [not_null]
+
+  - name: stg_txn__payments
+    description: >
+      Cleaned synthetic payment events. Grain: one row per transaction (txn_id).
+      Carries synthetic PII (email, IP) for masking demonstrations.
+    columns:
+      - name: txn_id
+        description: Transaction natural key.
+        data_tests: [not_null, unique]
+      - name: client_id
+        description: Borrower the transaction belongs to (FK to clients).
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_uci__credit_default')
+                field: client_id
+      - name: status
+        description: Posting status of the transaction.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['POSTED', 'PENDING', 'FAILED']
+      - name: borrower_email
+        description: Synthetic email — PII, masked downstream.
+        meta: {classification: PII}
+      - name: borrower_ip
+        description: Synthetic IPv4 — PII, masked downstream.
+        meta: {classification: PII}

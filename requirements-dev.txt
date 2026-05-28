@@ -1,0 +1,6 @@
+# CreditPulse — dev/CI-only dependencies (kept out of the runtime requirements).
+-r requirements.txt
+
+# SQL linting (run from ./dbt: sqlfluff lint models tests)
+sqlfluff>=4.0
+sqlfluff-templater-dbt>=4.0

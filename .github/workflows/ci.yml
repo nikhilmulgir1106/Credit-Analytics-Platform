@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  lint-build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Lint SQL (sqlfluff)
+        working-directory: dbt
+        run: sqlfluff lint models tests
+
+      - name: Run pipeline (ingest -> dbt build + tests -> quality gate)
+        # --skip-ml keeps CI focused on data correctness; the blocking quality
+        # gate fails the job if any critical expectation fails.
+        run: python orchestration/run_pipeline.py --skip-ml

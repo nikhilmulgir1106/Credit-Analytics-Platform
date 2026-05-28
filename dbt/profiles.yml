@@ -1,0 +1,11 @@
+creditpulse:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      # DuckDB file lives in the repo (gitignored). Path is relative to this
+      # dbt project dir, so dbt must be run from ./dbt.
+      path: "../warehouse/creditpulse.duckdb"
+      threads: 4
+      # External files (raw parquet/csv) read via DuckDB without import.
+      external_root: "../data"

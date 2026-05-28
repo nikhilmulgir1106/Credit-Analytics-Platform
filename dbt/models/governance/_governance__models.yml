@@ -1,0 +1,36 @@
+version: 2
+
+models:
+  - name: gov_dim_borrower_risk_analyst
+    description: "RISK_ANALYST borrower view — PII unmasked under policy. Grain: one row per client."
+    columns:
+      - name: client_id
+        data_tests: [not_null, unique]
+
+  - name: gov_dim_borrower_analyst
+    description: >
+      ANALYST borrower view — exact age and credit_limit masked, bands retained.
+      Grain: one row per client.
+    columns:
+      - name: client_id
+        data_tests: [not_null, unique]
+
+  - name: gov_payments_analyst
+    description: "ANALYST payments view — email and IP masked. Grain: one row per transaction."
+    columns:
+      - name: txn_id
+        data_tests: [not_null, unique]
+      - name: borrower_ip
+        description: Redacted IP — proves masking via a fixed accepted value.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['***.***.***.***']
+
+  - name: gov_dim_borrower_regional
+    description: >
+      Row-access view — restricted to a single region (var access_region).
+      Inherits analyst masking. Grain: one row per client in the region.
+    columns:
+      - name: client_id
+        data_tests: [not_null, unique]

@@ -1,0 +1,32 @@
+version: 2
+
+sources:
+  - name: raw
+    description: >
+      Bronze layer — verbatim, append-only copies of source files landed by the
+      ingestion scripts. Every row carries load metadata (_source_file,
+      _load_date, _loaded_at). Never edited; the replay system of record.
+    schema: raw
+    tables:
+      - name: uci_credit_default
+        description: >
+          UCI 'Default of Credit Card Clients' (Taiwan, 2005). One row per credit
+          card client; 23 features plus the next-month default flag.
+        columns:
+          - name: ID
+            description: Source client identifier (natural key).
+      - name: transactions
+        description: >
+          Synthetic daily payment-events feed (Faker). One row per transaction.
+          Carries synthetic PII (email, IP) used only to demonstrate masking.
+        # Freshness SLA (data_contracts.md): warn at 26h stale, block at 2x SLA.
+        loaded_at_field: _loaded_at
+        freshness:
+          warn_after: {count: 26, period: hour}
+          error_after: {count: 52, period: hour}
+        columns:
+          - name: txn_id
+            description: Synthetic transaction identifier (UUID).
+
+      # Lending Club is added here once the user drops a file under
+      # data/raw/lending_club/ and load_to_duckdb.py creates raw.lending_club_loans.
